@@ -1,8 +1,28 @@
 // @flow
-import HlsCore from 'hls.js';
+// $FlowIgnore 类型定义被直接写在toxic-decorators，不想搬了，忽略flow check
+import HlsCore from '@gem-mine/hls.js';
 import { CustEvent, deepAssign, Log, isElement, isObject } from 'chimee-helper';
 import defaultCustomConfig from './custom-config.js';
 import { autobind } from 'toxic-decorators';
+
+declare type KernelConfig = {
+  src: string,
+  isLive: boolean,
+  box: string,
+  preset: {
+    [string]: Function,
+  },
+  presetConfig: {
+    [string]: Object,
+  },
+  hlsCustomKey: {
+    isCustomKey: Boolean,
+    customKeyUrl: String,
+    customSign: String,
+    char2buf: Function,
+    customDecrypt: Function
+  }
+};
 
 const LOG_TAG = 'chimee-kernel-hls';
 
@@ -26,6 +46,14 @@ export default class Hls extends CustEvent {
     this.config = config;
     this.customConfig = deepAssign({}, defaultCustomConfig, customConfig);
     this.hlsKernel = new HlsCore(this.customConfig);
+    const { hlsCustomKey } = config;
+    if (hlsCustomKey) {
+      this.hlsKernel.isCustomKey = hlsCustomKey.isCustomKey;
+      this.hlsKernel.customKeyUrl = hlsCustomKey.customKeyUrl;
+      this.hlsKernel.customSign = hlsCustomKey.customSign;
+      this.hlsKernel.char2buf = hlsCustomKey.char2buf;
+      this.hlsKernel.customDecrypt = hlsCustomKey.customDecrypt;
+    }
     this.bindEvents();
     this.attachMedia();
   }
